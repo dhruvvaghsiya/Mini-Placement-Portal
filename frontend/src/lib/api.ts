@@ -216,9 +216,8 @@ export const driveApi = {
 export const applicationApi = {
   /** Student: apply to a drive */
   apply: (driveId: string) =>
-    request<Application>('/applications', {
+    request<Application>(`/drives/${driveId}/apply`, {
       method: 'POST',
-      body: JSON.stringify({ driveId }),
     }),
 
   /** Student: list own applications */
