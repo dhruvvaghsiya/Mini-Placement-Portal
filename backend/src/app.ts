@@ -9,6 +9,7 @@ dotenv.config();
 // ─── Route imports ────────────────────────────────────────────────────────────
 import authRoutes from './routes/auth.routes';
 import studentRoutes from './routes/student.routes';
+import tpoRoutes from './routes/tpo.routes';
 
 const app: Application = express();
 
@@ -40,6 +41,9 @@ app.use('/api/auth', authRoutes);
 
 // Student
 app.use('/api/students', studentRoutes);
+
+// TPO
+app.use('/api/tpo', tpoRoutes);
 
 // 404 handler — must be after all routes
 app.use((_req: Request, res: Response) => {
