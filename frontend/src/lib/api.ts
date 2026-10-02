@@ -7,6 +7,7 @@ import type {
   Application,
   ApplicationStatus,
   DriveStatus,
+  TpoDashboardStats,
 } from '../types';
 
 // ─── Error ────────────────────────────────────────────────────────────────────
@@ -240,4 +241,11 @@ export const applicationApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+};
+
+// ─── Dashboard API ────────────────────────────────────────────────────────────
+
+export const dashboardApi = {
+  getTpoStats: () =>
+    request<TpoDashboardStats>('/tpo/dashboard/stats'),
 };

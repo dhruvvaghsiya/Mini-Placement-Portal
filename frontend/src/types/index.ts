@@ -136,3 +136,15 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   page: number;
   limit: number;
 }
+
+// ─── Dashboard Stats ──────────────────────────────────────────────────────────
+
+export interface TpoDashboardStats {
+  totalStudents: number;
+  verifiedStudents: number;
+  totalCompanies: number;
+  activeDrives: number;
+  totalApplications: number;
+  shortlistedApplications: number;
+  selectedApplications: number;
+}
