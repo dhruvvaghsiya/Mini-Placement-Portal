@@ -7,9 +7,14 @@
         "dev": "npx ts-node-dev --respawn --transpile-only src/app.ts",
         "build": "npx tsc",
         "start": "node dist/app.js",
+        "test": "npx ts-node src/tests/integration.test.ts",
+        "db:seed": "npx ts-node prisma/seed.ts",
         "prisma:generate": "npx prisma generate",
         "prisma:migrate": "npx prisma migrate dev",
         "prisma:studio": "npx prisma studio"
+    },
+    "prisma": {
+        "seed": "npx ts-node prisma/seed.ts"
     },
     "dependencies": {
         "@prisma/client": "^5.14.0",

@@ -52,9 +52,27 @@ Mini-Placement-Portal/
 ## Local Setup
 1. Clone the repository
 2. Install frontend and backend dependencies
-3. Setup PostgreSQL database and Prisma scheme
+3. Setup PostgreSQL database and Prisma schema
 4. Create environment variables for frontend and backend
 5. Start development servers
+
+## Database Seed & Testing
+Run commands from the `backend/` directory:
+
+- **Database Seed**: `npm run db:seed` (or `npx prisma db seed`)
+- **Integration Tests**: `npm test`
+- **Schema Validation**: `npx prisma validate`
+- **Type Checking**: `npx tsc --noEmit`
+
+### Demo Credentials
+| Role | Email | Password | Description |
+| --- | --- | --- | --- |
+| Central TPO | `tpo@admin.com` | `Password123!` | Full TPO administrative access |
+| Eligible Student | `student.eligible@example.com` | `Password123!` | Locked & verified student (12th path, CPI 8.75) |
+| D2D Student | `student.d2d@example.com` | `Password123!` | Locked & verified student (Diploma path, CGPA 8.9, CPI 8.4) |
+| Low CPI Student | `student.lowcpi@example.com` | `Password123!` | Locked & verified student (CPI 5.5) |
+| Unverified Student | `student.unverified@example.com` | `Password123!` | Profile locked, pending TPO verification |
+| New Student | `student.new@example.com` | `Password123!` | Fresh account, no profile created yet |
 
 ## Environment Variables
 Environment variables should not be committed to the repository. Please use the `.env.example` file provided in both frontend and backend to structure your own `.env` fields. Example configuration values include:

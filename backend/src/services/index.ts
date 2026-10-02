@@ -7,8 +7,8 @@ export type { CreateProfileInput, UpdateProfileInput, TenthSubjectMarks } from '
 export { getAllCompanies, createCompany } from './company.service';
 export type { CreateCompanyInput, CompanyRecord } from './company.service';
 
-export { getAllDrives, getDriveById, getEligibleStudentsForDrive } from './drive.service';
-export type { DriveWithCompany, EligibleStudent } from './drive.service';
+export { getAllDrives, getDriveById, getEligibleStudentsForDrive, createDrive, applyToDrive } from './drive.service';
+export type { DriveWithCompany, EligibleStudent, CreateDriveInput } from './drive.service';
 
 export { checkStudentEligibility } from './eligibility.service';
 export type { EligibilityProfile, EligibilityDrive, EligibilityResult } from './eligibility.service';
