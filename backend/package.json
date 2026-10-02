@@ -5,7 +5,7 @@
     "main": "dist/app.js",
     "scripts": {
         "dev": "npx ts-node-dev --respawn --transpile-only src/app.ts",
-        "build": "npx tsc",
+        "build": "npx prisma generate && npx tsc",
         "start": "node dist/app.js",
         "test": "npx ts-node src/tests/integration.test.ts",
         "db:seed": "npx ts-node prisma/seed.ts",
