@@ -1,6 +1,6 @@
-// Prisma Schema — Mini Placement Portal
-// Full schema will be defined in a later phase.
-// See docs/DATABASE.md for the planned data model.
+// ─────────────────────────────────────────────────────────────────────────────
+// Mini Placement Portal — Prisma Schema
+// ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +11,131 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Models will be added here as development progresses.
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  STUDENT
+  TPO
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  REJECTED
+  SELECTED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+/// Base authentication record for every user in the system.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// A STUDENT has exactly one profile; a TPO has none.
+  studentProfile StudentProfile?
+
+  @@map("users")
+}
+
+/// Extended academic and personal details for students.
+model StudentProfile {
+  id   String @id @default(cuid())
+  /// FK to User — one-to-one
+  userId String @unique
+
+  // ── Personal details ──────────────────────────────────────
+  fullName String
+  phone    String
+  dob      DateTime @db.Date
+
+  // ── Academic details ──────────────────────────────────────
+  /// JSON object storing subject-wise marks, e.g. {"Math": 95, "Science": 88}
+  tenthSubjectMarks Json?
+  tenthPercentage   Float
+
+  /// Null for D2D students (they use d2dCgpa instead)
+  twelfthPercentage Float?
+
+  isD2D   Boolean @default(false)
+  /// Null for non-D2D students
+  d2dCgpa Float?
+
+  /// Current Performance Index
+  cpi Float
+
+  // ── Profile state ─────────────────────────────────────────
+  profileLocked Boolean @default(false)
+  isVerified    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Relations ─────────────────────────────────────────────
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("student_profiles")
+}
+
+/// Recruiting company record.
+model Company {
+  id       String  @id @default(cuid())
+  name     String
+  imageUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  drives RecruitmentDrive[]
+
+  @@map("companies")
+}
+
+/// A single placement drive posted by a TPO for a company.
+model RecruitmentDrive {
+  id          String   @id @default(cuid())
+  companyId   String
+  role        String
+  /// Cost-to-Company in LPA
+  ctc         Float
+  description String
+  deadline    DateTime
+
+  // ── Eligibility criteria (all optional — null means no restriction) ──
+  minTenthPercentage   Float?
+  minTwelfthPercentage Float?
+  minD2DCgpa           Float?
+  minCpi               Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Relations ─────────────────────────────────────────────
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("recruitment_drives")
+}
+
+/// Student application to a recruitment drive.
+model Application {
+  id        String            @id @default(cuid())
+  studentId String
+  driveId   String
+  status    ApplicationStatus @default(APPLIED)
+  appliedAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  // ── Relations ─────────────────────────────────────────────
+  student StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  drive   RecruitmentDrive @relation(fields: [driveId], references: [id], onDelete: Cascade)
+
+  /// Prevent a student from applying to the same drive more than once.
+  @@unique([studentId, driveId])
+  @@map("applications")
+}
