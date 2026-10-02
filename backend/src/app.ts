@@ -17,10 +17,44 @@ const app: Application = express();
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
+const rawClientUrl = process.env.CLIENT_URL;
+
+const normalizeOrigin = (url?: string): string => {
+    if (!url) return '';
+    const trimmed = url.trim().replace(/\/$/, '');
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        return `https://${trimmed}`;
+    }
+    return trimmed;
+};
+
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    normalizeOrigin(rawClientUrl),
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
+        origin: (origin, callback) => {
+            // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+            if (!origin) return callback(null, true);
+
+            const cleanOrigin = origin.replace(/\/$/, '');
+            const isAllowed =
+                allowedOrigins.includes(cleanOrigin) ||
+                cleanOrigin.endsWith('.vercel.app') ||
+                cleanOrigin.includes('localhost');
+
+            if (isAllowed) {
+                return callback(null, true);
+            }
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+        exposedHeaders: ['Set-Cookie'],
     })
 );
 
@@ -31,7 +65,7 @@ app.use(cookieParser());
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 // Health check
-app.get('/api/health', (_req: Request, res: Response) => {
+app.get(['/health', '/api/health'], (_req: Request, res: Response) => {
     res.status(200).json({
         success: true,
         message: 'API is running',
@@ -40,18 +74,23 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 // Auth
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 
 // Student
 app.use('/api/students', studentRoutes);
+app.use('/students', studentRoutes);
 
 // Companies
 app.use('/api/companies', companyRoutes);
+app.use('/companies', companyRoutes);
 
 // Drives
 app.use('/api/drives', driveRoutes);
+app.use('/drives', driveRoutes);
 
 // TPO management
 app.use('/api/tpo', tpoRoutes);
+app.use('/tpo', tpoRoutes);
 
 // 404 handler — must be after all routes
 app.use((_req: Request, res: Response) => {
