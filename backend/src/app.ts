@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes';
 import studentRoutes from './routes/student.routes';
 import companyRoutes from './routes/company.routes';
 import driveRoutes from './routes/drive.routes';
+import tpoRoutes from './routes/tpo.routes';
 
 const app: Application = express();
 
@@ -49,6 +50,9 @@ app.use('/api/companies', companyRoutes);
 // Drives
 app.use('/api/drives', driveRoutes);
 
+// TPO management
+app.use('/api/tpo', tpoRoutes);
+
 // 404 handler — must be after all routes
 app.use((_req: Request, res: Response) => {
     res.status(404).json({ success: false, message: 'Route not found' });
@@ -72,6 +76,7 @@ app.listen(PORT, () => {
     console.log(`   Students     → http://localhost:${PORT}/api/students`);
     console.log(`   Companies    → http://localhost:${PORT}/api/companies`);
     console.log(`   Drives       → http://localhost:${PORT}/api/drives`);
+    console.log(`   TPO          → http://localhost:${PORT}/api/tpo`);
 });
 
 export default app;

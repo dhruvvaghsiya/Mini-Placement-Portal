@@ -13,4 +13,7 @@ export type { DriveWithCompany, EligibleStudent } from './drive.service';
 export { checkStudentEligibility } from './eligibility.service';
 export type { EligibilityProfile, EligibilityDrive, EligibilityResult } from './eligibility.service';
 
+export { verifyStudent } from './tpo.service';
+export type { VerificationResult } from './tpo.service';
+
 
