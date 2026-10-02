@@ -6,3 +6,6 @@ export type { CreateProfileInput, UpdateProfileInput, TenthSubjectMarks } from '
 
 export { getAllCompanies, createCompany } from './company.service';
 export type { CreateCompanyInput, CompanyRecord } from './company.service';
+
+export { getAllDrives, getDriveById, createDrive } from './drive.service';
+export type { CreateDriveInput } from './drive.service';

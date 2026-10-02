@@ -10,6 +10,7 @@ dotenv.config();
 import authRoutes from './routes/auth.routes';
 import studentRoutes from './routes/student.routes';
 import companyRoutes from './routes/company.routes';
+import driveRoutes from './routes/drive.routes';
 
 const app: Application = express();
 
@@ -45,6 +46,9 @@ app.use('/api/students', studentRoutes);
 // Companies
 app.use('/api/companies', companyRoutes);
 
+// Recruitment drives
+app.use('/api/drives', driveRoutes);
+
 // 404 handler — must be after all routes
 app.use((_req: Request, res: Response) => {
     res.status(404).json({ success: false, message: 'Route not found' });
@@ -67,6 +71,7 @@ app.listen(PORT, () => {
     console.log(`   Auth         → http://localhost:${PORT}/api/auth`);
     console.log(`   Students     → http://localhost:${PORT}/api/students`);
     console.log(`   Companies    → http://localhost:${PORT}/api/companies`);
+    console.log(`   Drives       → http://localhost:${PORT}/api/drives`);
 });
 
 export default app;
