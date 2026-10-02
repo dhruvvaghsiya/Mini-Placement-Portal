@@ -59,7 +59,28 @@ export default function DrivesPage() {
         }
     }, []);
 
-    useEffect(() => { loadDrives(); }, [loadDrives]);
+    useEffect(() => {
+        let isMounted = true;
+        fetchDrives()
+            .then((res) => {
+                if (!isMounted) return;
+                if (res.success && res.data?.drives) {
+                    setDrives(res.data.drives);
+                } else {
+                    setError(res.message || 'Failed to load drives.');
+                }
+            })
+            .catch(() => {
+                if (isMounted) setError('Unable to connect to the server. Please try again.');
+            })
+            .finally(() => {
+                if (isMounted) setLoading(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Auto-dismiss toast after 4 s
     useEffect(() => {

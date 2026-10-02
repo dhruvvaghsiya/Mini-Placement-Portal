@@ -5,6 +5,8 @@ import {
     getApplicationsHandler,
     updateApplicationStatusHandler,
     getDashboardStatsHandler,
+    getStudentsHandler,
+    getStudentByIdHandler,
 } from '../controllers/tpo.controller';
 
 const router = Router();
@@ -15,13 +17,13 @@ const router = Router();
 // ─── GET /api/tpo/dashboard/stats ────────────────────────────────────────────
 router.get('/dashboard/stats', ...requireTPO, getDashboardStatsHandler);
 
-// ─── PATCH /api/tpo/students/:id/verify ──────────────────────────────────────
+// ─── Students management ──────────────────────────────────────────────────────
+router.get('/students', ...requireTPO, getStudentsHandler);
+router.get('/students/:id', ...requireTPO, getStudentByIdHandler);
 router.patch('/students/:id/verify', ...requireTPO, verifyStudentHandler);
 
-// ─── GET /api/tpo/applications ────────────────────────────────────────────────
+// ─── Applications management ──────────────────────────────────────────────────
 router.get('/applications', ...requireTPO, getApplicationsHandler);
-
-// ─── PATCH /api/tpo/applications/:id/status ──────────────────────────────────
 router.patch('/applications/:id/status', ...requireTPO, updateApplicationStatusHandler);
 
 export default router;

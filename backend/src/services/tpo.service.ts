@@ -243,3 +243,47 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         selectedApplications,
     };
 }
+
+// ─── Student management ───────────────────────────────────────────────────────
+
+/**
+ * Returns all student profiles with user details, ordered newest-first.
+ */
+export async function getAllStudents() {
+    return prisma.studentProfile.findMany({
+        include: {
+            user: { select: { id: true, email: true, role: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+}
+
+/**
+ * Returns a single student profile by ID with user and application history.
+ *
+ * @throws { code: 'NOT_FOUND' } — student profile does not exist
+ */
+export async function getStudentById(studentProfileId: string) {
+    const student = await prisma.studentProfile.findUnique({
+        where: { id: studentProfileId },
+        include: {
+            user: { select: { id: true, email: true, role: true } },
+            applications: {
+                include: {
+                    drive: {
+                        include: {
+                            company: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!student) {
+        throw Object.assign(new Error('Student profile not found'), { code: 'NOT_FOUND' });
+    }
+
+    return student;
+}
+

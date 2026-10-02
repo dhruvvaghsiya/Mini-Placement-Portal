@@ -235,7 +235,36 @@ async function runTests() {
         if (statusBody.data.application.status !== 'SHORTLISTED') throw new Error('Status update mismatch');
         console.log('   ✅ Application status updated to SHORTLISTED');
 
-        console.log('\n🎉 ALL 11 INTEGRATION TESTS PASSED SUCCESSFULLY!\n');
+        // ─── Flow 12: TPO student listing & detail ──────────────────────────
+        console.log('12. Testing TPO student list and detail...');
+        const studentsListRes = await request('/api/tpo/students', {
+            method: 'GET',
+            cookie: tpoCookie,
+        });
+        if (studentsListRes.status !== 200) throw new Error(`Student list failed with ${studentsListRes.status}`);
+        const studentsListBody = (await studentsListRes.json()) as { data: { students: { id: string }[] } };
+        if (!studentsListBody.data.students.length) throw new Error('No students returned');
+        console.log('   ✅ TPO student list fetched successfully');
+
+        const singleStudentRes = await request(`/api/tpo/students/${newStudentProfile.id}`, {
+            method: 'GET',
+            cookie: tpoCookie,
+        });
+        if (singleStudentRes.status !== 200) throw new Error(`Single student fetch failed with ${singleStudentRes.status}`);
+        console.log('   ✅ TPO student details fetched successfully');
+
+        // ─── Flow 13: TPO dashboard stats ───────────────────────────────────
+        console.log('13. Testing TPO dashboard statistics...');
+        const statsRes = await request('/api/tpo/dashboard/stats', {
+            method: 'GET',
+            cookie: tpoCookie,
+        });
+        if (statsRes.status !== 200) throw new Error(`Dashboard stats failed with ${statsRes.status}`);
+        const statsBody = (await statsRes.json()) as { data: { stats: Record<string, number> } };
+        if (typeof statsBody.data.stats.totalStudents !== 'number') throw new Error('Stats format invalid');
+        console.log('   ✅ TPO dashboard statistics fetched successfully');
+
+        console.log('\n🎉 ALL 13 INTEGRATION TESTS PASSED SUCCESSFULLY!\n');
     } finally {
         if (server) {
             server.close();

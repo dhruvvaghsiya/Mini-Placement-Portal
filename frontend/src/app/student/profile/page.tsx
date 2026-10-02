@@ -46,10 +46,6 @@ function profileToForm(p: StudentProfile): FormState {
     };
 }
 
-function isNum(v: unknown): v is number {
-    return typeof v === 'number' && isFinite(v) && v >= 0;
-}
-
 export default function StudentProfilePage() {
     const [profile, setProfile] = useState<StudentProfile | null>(null);
     const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -76,7 +72,27 @@ export default function StudentProfilePage() {
         }
     }, []);
 
-    useEffect(() => { loadProfile(); }, [loadProfile]);
+    useEffect(() => {
+        let isMounted = true;
+        fetchProfile()
+            .then((res) => {
+                if (!isMounted) return;
+                if (res.success && res.data?.profile) {
+                    setProfile(res.data.profile);
+                    setForm(profileToForm(res.data.profile));
+                }
+            })
+            .catch(() => {
+                if (isMounted) setApiError('Unable to connect to the server. Please try again.');
+            })
+            .finally(() => {
+                if (isMounted) setLoading(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const locked = profile?.profileLocked === true;
 

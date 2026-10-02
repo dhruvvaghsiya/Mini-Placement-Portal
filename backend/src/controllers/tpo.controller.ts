@@ -4,6 +4,8 @@ import {
     getAllApplications,
     updateApplicationStatus,
     getDashboardStats,
+    getAllStudents,
+    getStudentById,
 } from '../services/tpo.service';
 
 // ─── PATCH /api/tpo/students/:id/verify ──────────────────────────────────────
@@ -155,3 +157,63 @@ export async function getDashboardStatsHandler(
         next(err);
     }
 }
+
+// ─── GET /api/tpo/students ────────────────────────────────────────────────────
+
+/**
+ * Returns all student profiles with associated user credentials/roles.
+ * Requires TPO role.
+ */
+export async function getStudentsHandler(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const students = await getAllStudents();
+
+        res.status(200).json({
+            success: true,
+            message: 'Students fetched successfully',
+            data: { students },
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// ─── GET /api/tpo/students/:id ────────────────────────────────────────────────
+
+/**
+ * Returns a single student profile by ID.
+ * Requires TPO role.
+ */
+export async function getStudentByIdHandler(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const { id } = req.params;
+
+        if (!id || !id.trim()) {
+            res.status(400).json({ success: false, message: 'Student id is required' });
+            return;
+        }
+
+        const student = await getStudentById(id.trim());
+
+        res.status(200).json({
+            success: true,
+            message: 'Student fetched successfully',
+            data: { student },
+        });
+    } catch (err) {
+        if (err instanceof Error && (err as Error & { code?: string }).code === 'NOT_FOUND') {
+            res.status(404).json({ success: false, message: err.message });
+            return;
+        }
+        next(err);
+    }
+}
+
