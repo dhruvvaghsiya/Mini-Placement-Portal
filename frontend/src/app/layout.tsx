@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     "A modern placement management system for students and Training & Placement Officers.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"

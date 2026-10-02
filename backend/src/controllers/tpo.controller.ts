@@ -1,61 +1,224 @@
-import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
-import { ApplicationStatus } from '@prisma/client';
+import { Request, Response, NextFunction } from 'express';
+import {
+    verifyStudent,
+    getAllApplications,
+    updateApplicationStatus,
+    getDashboardStats,
+    getAllStudents,
+    getStudentById,
+} from '../services/tpo.service';
 
-export const getApplications = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const apps = await prisma.application.findMany({
-            include: {
-                student: { include: { user: true } },
-                drive: { include: { company: true } },
-            },
-            orderBy: { appliedAt: 'desc' },
-        });
+// ─── PATCH /api/tpo/students/:id/verify ──────────────────────────────────────
 
-        const formattedApps = apps.map((app) => ({
-            id: app.id,
-            studentId: app.studentId,
-            studentName: app.student.fullName,
-            studentEmail: app.student.user.email,
-            companyName: app.drive.company.name,
-            driveId: app.driveId,
-            role: app.drive.role,
-            ctc: app.drive.ctc,
-            appliedDate: app.appliedAt,
-            status: app.status,
-        }));
-
-        res.status(200).json({ success: true, applications: formattedApps });
-    } catch (err) {
-        console.error('Error fetching applications:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-};
-
-export const updateApplicationStatus = async (req: Request, res: Response): Promise<void> => {
+/**
+ * Marks a student profile as verified.
+ * Requires TPO role (enforced at the route level via requireTPO).
+ *
+ * URL param :id — the StudentProfile primary-key CUID.
+ */
+export async function verifyStudentHandler(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
     try {
         const { id } = req.params;
-        const { status } = req.body;
 
-        if (!status || !Object.values(ApplicationStatus).includes(status)) {
-            res.status(400).json({ success: false, message: 'Invalid status' });
+        if (!id || !id.trim()) {
+            res.status(400).json({ success: false, message: 'Student profile id is required' });
             return;
         }
 
-        const existingApp = await prisma.application.findUnique({ where: { id } });
-        if (!existingApp) {
-            res.status(404).json({ success: false, message: 'Application not found' });
-            return;
-        }
+        const result = await verifyStudent(id.trim());
 
-        const updatedApp = await prisma.application.update({
-            where: { id },
-            data: { status },
+        res.status(200).json({
+            success: true,
+            message: `Student "${result.fullName}" verified successfully`,
+            data: result,
+            verification: result,
         });
-
-        res.status(200).json({ success: true, application: updatedApp });
     } catch (err) {
-        console.error('Error updating application status:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        if (err instanceof Error) {
+            const code = (err as Error & { code?: string }).code;
+
+            if (code === 'NOT_FOUND') {
+                res.status(404).json({ success: false, message: err.message });
+                return;
+            }
+
+            if (code === 'PROFILE_INCOMPLETE') {
+                res.status(409).json({ success: false, message: err.message });
+                return;
+            }
+        }
+        next(err);
     }
-};
+}
+
+// ─── GET /api/tpo/applications ───────────────────────────────────────────────────
+
+/**
+ * Returns all applications enriched with student, drive, and company info.
+ * Requires TPO role (enforced at the route level via requireTPO).
+ */
+export async function getApplicationsHandler(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const applications = await getAllApplications();
+
+        res.status(200).json({
+            success: true,
+            message: 'Applications fetched successfully',
+            data: applications,
+            applications,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// ─── PATCH /api/tpo/applications/:id/status ─────────────────────────────────────
+
+/**
+ * Updates the status of a single application.
+ * Requires TPO role (enforced at the route level via requireTPO).
+ *
+ * URL param :id  — the Application primary-key CUID.
+ * Body       { status: ApplicationStatus }
+ */
+export async function updateApplicationStatusHandler(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const { id } = req.params;
+        const { status } = req.body as { status?: string };
+
+        if (!id || !id.trim()) {
+            res.status(400).json({ success: false, message: 'Application id is required' });
+            return;
+        }
+
+        if (!status || typeof status !== 'string' || !status.trim()) {
+            res.status(400).json({
+                success: false,
+                message: 'status is required in the request body',
+            });
+            return;
+        }
+
+        const application = await updateApplicationStatus(id.trim(), status.trim().toUpperCase());
+
+        res.status(200).json({
+            success: true,
+            message: `Application status updated to "${application.status}"`,
+            data: application,
+            application,
+        });
+    } catch (err) {
+        if (err instanceof Error) {
+            const code = (err as Error & { code?: string }).code;
+
+            if (code === 'INVALID_STATUS') {
+                res.status(400).json({ success: false, message: err.message });
+                return;
+            }
+
+            if (code === 'NOT_FOUND') {
+                res.status(404).json({ success: false, message: err.message });
+                return;
+            }
+        }
+        next(err);
+    }
+}
+
+// ─── GET /api/tpo/dashboard/stats ────────────────────────────────────────────
+
+/**
+ * Returns aggregate counts for the TPO dashboard.
+ * Requires TPO role (enforced at the route level via requireTPO).
+ */
+export async function getDashboardStatsHandler(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const stats = await getDashboardStats();
+
+        res.status(200).json({
+            success: true,
+            message: 'Dashboard statistics fetched successfully',
+            data: stats,
+            stats,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// ─── GET /api/tpo/students ────────────────────────────────────────────────────
+
+/**
+ * Returns all student profiles with associated user credentials/roles.
+ * Requires TPO role.
+ */
+export async function getStudentsHandler(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const students = await getAllStudents();
+
+        res.status(200).json({
+            success: true,
+            message: 'Students fetched successfully',
+            data: students,
+            students,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// ─── GET /api/tpo/students/:id ────────────────────────────────────────────────
+
+/**
+ * Returns a single student profile by ID.
+ * Requires TPO role.
+ */
+export async function getStudentByIdHandler(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const { id } = req.params;
+
+        if (!id || !id.trim()) {
+            res.status(400).json({ success: false, message: 'Student id is required' });
+            return;
+        }
+
+        const student = await getStudentById(id.trim());
+
+        res.status(200).json({
+            success: true,
+            message: 'Student fetched successfully',
+            data: student,
+            student,
+        });
+    } catch (err) {
+        if (err instanceof Error && (err as Error & { code?: string }).code === 'NOT_FOUND') {
+            res.status(404).json({ success: false, message: err.message });
+            return;
+        }
+        next(err);
+    }
+}
