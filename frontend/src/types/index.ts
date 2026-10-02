@@ -69,6 +69,9 @@ export interface StudentProfile {
 
   // Locked once submitted
   profileLocked: boolean;
+
+  // TPO Verification
+  isVerified?: boolean;
 }
 
 // ─── Company ──────────────────────────────────────────────────────────────────
