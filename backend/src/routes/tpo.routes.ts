@@ -4,12 +4,16 @@ import {
     verifyStudentHandler,
     getApplicationsHandler,
     updateApplicationStatusHandler,
+    getDashboardStatsHandler,
 } from '../controllers/tpo.controller';
 
 const router = Router();
 
 // All TPO routes require authentication + TPO role.
 // requireTPO = [authenticate, roleCheck(TPO)]
+
+// ─── GET /api/tpo/dashboard/stats ────────────────────────────────────────────
+router.get('/dashboard/stats', ...requireTPO, getDashboardStatsHandler);
 
 // ─── PATCH /api/tpo/students/:id/verify ──────────────────────────────────────
 router.patch('/students/:id/verify', ...requireTPO, verifyStudentHandler);

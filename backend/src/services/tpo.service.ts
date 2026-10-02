@@ -193,3 +193,53 @@ export async function updateApplicationStatus(
         updatedAt: updated.updatedAt,
     };
 }
+
+// ─── Dashboard statistics ─────────────────────────────────────────────────────
+
+/** Shape of the stats object returned to the TPO dashboard */
+export interface DashboardStats {
+    totalStudents: number;
+    verifiedStudents: number;
+    totalCompanies: number;
+    activeDrives: number;
+    totalApplications: number;
+    shortlistedApplications: number;
+    selectedApplications: number;
+}
+
+/**
+ * Returns aggregate counts for the TPO dashboard.
+ * All queries run in a single transaction so the numbers are consistent.
+ * Returns zeros for every field when the database is empty.
+ */
+export async function getDashboardStats(): Promise<DashboardStats> {
+    const now = new Date();
+
+    const [
+        totalStudents,
+        verifiedStudents,
+        totalCompanies,
+        activeDrives,
+        totalApplications,
+        shortlistedApplications,
+        selectedApplications,
+    ] = await prisma.$transaction([
+        prisma.studentProfile.count(),
+        prisma.studentProfile.count({ where: { isVerified: true } }),
+        prisma.company.count(),
+        prisma.recruitmentDrive.count({ where: { deadline: { gt: now } } }),
+        prisma.application.count(),
+        prisma.application.count({ where: { status: ApplicationStatus.SHORTLISTED } }),
+        prisma.application.count({ where: { status: ApplicationStatus.SELECTED } }),
+    ]);
+
+    return {
+        totalStudents,
+        verifiedStudents,
+        totalCompanies,
+        activeDrives,
+        totalApplications,
+        shortlistedApplications,
+        selectedApplications,
+    };
+}

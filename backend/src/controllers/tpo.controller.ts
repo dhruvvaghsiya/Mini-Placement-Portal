@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyStudent, getAllApplications, updateApplicationStatus } from '../services/tpo.service';
+import {
+    verifyStudent,
+    getAllApplications,
+    updateApplicationStatus,
+    getDashboardStats,
+} from '../services/tpo.service';
 
 // ─── PATCH /api/tpo/students/:id/verify ──────────────────────────────────────
 
@@ -123,6 +128,30 @@ export async function updateApplicationStatusHandler(
                 return;
             }
         }
+        next(err);
+    }
+}
+
+// ─── GET /api/tpo/dashboard/stats ────────────────────────────────────────────
+
+/**
+ * Returns aggregate counts for the TPO dashboard.
+ * Requires TPO role (enforced at the route level via requireTPO).
+ */
+export async function getDashboardStatsHandler(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const stats = await getDashboardStats();
+
+        res.status(200).json({
+            success: true,
+            message: 'Dashboard statistics fetched successfully',
+            data: { stats },
+        });
+    } catch (err) {
         next(err);
     }
 }
