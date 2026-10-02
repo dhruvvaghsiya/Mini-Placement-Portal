@@ -5,11 +5,8 @@ import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import {
-  studentApi,
-  StudentProfileResponse,
-  ApiError,
-} from '@/lib/api';
+import { studentApi, ApiError } from '@/lib/api';
+import type { StudentProfile } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -77,7 +74,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function responseToForm(p: StudentProfileResponse): ProfileFormValues {
+function responseToForm(p: StudentProfile): ProfileFormValues {
   return {
     fullName: p.fullName,
     phone: p.phone,
@@ -99,7 +96,7 @@ export default function StudentProfilePage() {
   const { user } = useAuth();
 
   // Server-fetched profile state
-  const [profile, setProfile] = useState<StudentProfileResponse | null>(null);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 

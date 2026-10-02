@@ -7,14 +7,15 @@ import {
   useState,
   ReactNode,
 } from 'react';
-import { authApi, AuthUser, ApiError } from '@/lib/api';
+import { authApi, ApiError } from '@/lib/api';
+import type { User } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: User | null;
   isLoading: boolean;
-  setUser: (user: AuthUser | null) => void;
+  setUser: (user: User | null) => void;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -24,7 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // On mount: check if a session cookie already exists by calling /auth/me.

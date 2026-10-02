@@ -1,4 +1,13 @@
 import { API_BASE_URL } from './constants';
+import type {
+  User,
+  StudentProfile,
+  Company,
+  RecruitmentDrive,
+  Application,
+  ApplicationStatus,
+  DriveStatus,
+} from '../types';
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +42,7 @@ async function request<T>(
   try {
     body = await res.json();
   } catch {
-    // empty body
+    // empty body – ignore
   }
 
   if (!res.ok) {
@@ -62,22 +71,15 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface AuthUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: 'student' | 'tpo';
-}
-
 export const authApi = {
   register: (payload: RegisterPayload) =>
-    request<AuthUser>('/auth/register', {
+    request<User>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
   login: (payload: LoginPayload) =>
-    request<AuthUser>('/auth/login', {
+    request<User>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -85,15 +87,10 @@ export const authApi = {
   logout: () =>
     request<void>('/auth/logout', { method: 'POST' }),
 
-  me: () => request<AuthUser>('/auth/me'),
+  me: () => request<User>('/auth/me'),
 };
 
 // ─── Student Profile API ───────────────────────────────────────────────────────
-
-export interface Subject10th {
-  name: string;
-  marks: number;
-}
 
 export interface StudentProfilePayload {
   // Personal
@@ -101,37 +98,138 @@ export interface StudentProfilePayload {
   phone: string;
   dateOfBirth: string;
 
-  // 10th
-  subjects10th: Subject10th[];
+  // 10th grade
+  subjects10th: { name: string; marks: number }[];
   percentage10th: number;
 
-  // Type
+  // Education type
   isD2D: boolean;
 
-  // D2D path
+  // D2D path (diploma → degree)
   d2dCgpa?: number;
 
-  // Non-D2D path
+  // Non-D2D path (12th → degree)
   percentage12th?: number;
 
   // Academic
   cpi: number;
 }
 
-export interface StudentProfileResponse extends StudentProfilePayload {
-  id: string;
-  userId: string;
-  email: string;              // read-only, from auth
-  profileLocked: boolean;     // backend sets this — do NOT trust frontend
-}
-
 export const studentApi = {
   getProfile: () =>
-    request<StudentProfileResponse>('/students/profile'),
+    request<StudentProfile>('/students/profile'),
 
   saveProfile: (payload: StudentProfilePayload) =>
-    request<StudentProfileResponse>('/students/profile', {
+    request<StudentProfile>('/students/profile', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+
+  /** TPO: list all student profiles */
+  listAll: () =>
+    request<StudentProfile[]>('/students'),
+
+  /** TPO: get a specific student by id */
+  getById: (id: string) =>
+    request<StudentProfile>(`/students/${id}`),
+};
+
+// ─── Company API ──────────────────────────────────────────────────────────────
+
+export interface CompanyPayload {
+  name: string;
+  website?: string;
+  industry: string;
+  description?: string;
+}
+
+export const companyApi = {
+  list: () =>
+    request<Company[]>('/companies'),
+
+  get: (id: string) =>
+    request<Company>(`/companies/${id}`),
+
+  create: (payload: CompanyPayload) =>
+    request<Company>('/companies', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  update: (id: string, payload: Partial<CompanyPayload>) =>
+    request<Company>(`/companies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  remove: (id: string) =>
+    request<void>(`/companies/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Recruitment Drive API ────────────────────────────────────────────────────
+
+export interface DrivePayload {
+  title: string;
+  companyId: string;
+  description: string;
+  eligibilityCriteria: string;
+  package: string;
+  location: string;
+  driveDate: string;
+  applicationDeadline: string;
+}
+
+export const driveApi = {
+  list: () =>
+    request<RecruitmentDrive[]>('/drives'),
+
+  get: (id: string) =>
+    request<RecruitmentDrive>(`/drives/${id}`),
+
+  create: (payload: DrivePayload) =>
+    request<RecruitmentDrive>('/drives', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  update: (id: string, payload: Partial<DrivePayload>) =>
+    request<RecruitmentDrive>(`/drives/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  /** TPO: change the status of a drive */
+  updateStatus: (id: string, status: DriveStatus) =>
+    request<RecruitmentDrive>(`/drives/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// ─── Application API ──────────────────────────────────────────────────────────
+
+export const applicationApi = {
+  /** Student: apply to a drive */
+  apply: (driveId: string) =>
+    request<Application>('/applications', {
+      method: 'POST',
+      body: JSON.stringify({ driveId }),
+    }),
+
+  /** Student: list own applications */
+  myApplications: () =>
+    request<Application[]>('/applications/mine'),
+
+  /** TPO: list all applications, optionally filtered by drive */
+  listForDrive: (driveId?: string) =>
+    request<Application[]>(
+      driveId ? `/applications?driveId=${driveId}` : '/applications',
+    ),
+
+  /** TPO: update the status of an application */
+  updateStatus: (id: string, status: ApplicationStatus) =>
+    request<Application>(`/applications/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     }),
 };

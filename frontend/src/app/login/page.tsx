@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import { authApi, ApiError } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
+import { Role } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/ui/Input';
 import PasswordInput from '@/components/ui/PasswordInput';
@@ -48,7 +49,7 @@ export default function LoginPage() {
       setUser(user);
       // Redirect based on role
       router.replace(
-        user.role === 'tpo' ? ROUTES.TPO.DASHBOARD : ROUTES.STUDENT.DASHBOARD,
+        user.role === Role.TPO ? ROUTES.TPO.DASHBOARD : ROUTES.STUDENT.DASHBOARD,
       );
     } catch (err) {
       if (err instanceof ApiError) {
