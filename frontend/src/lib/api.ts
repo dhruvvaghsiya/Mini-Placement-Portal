@@ -87,3 +87,51 @@ export const authApi = {
 
   me: () => request<AuthUser>('/auth/me'),
 };
+
+// ─── Student Profile API ───────────────────────────────────────────────────────
+
+export interface Subject10th {
+  name: string;
+  marks: number;
+}
+
+export interface StudentProfilePayload {
+  // Personal
+  fullName: string;
+  phone: string;
+  dateOfBirth: string;
+
+  // 10th
+  subjects10th: Subject10th[];
+  percentage10th: number;
+
+  // Type
+  isD2D: boolean;
+
+  // D2D path
+  d2dCgpa?: number;
+
+  // Non-D2D path
+  percentage12th?: number;
+
+  // Academic
+  cpi: number;
+}
+
+export interface StudentProfileResponse extends StudentProfilePayload {
+  id: string;
+  userId: string;
+  email: string;              // read-only, from auth
+  profileLocked: boolean;     // backend sets this — do NOT trust frontend
+}
+
+export const studentApi = {
+  getProfile: () =>
+    request<StudentProfileResponse>('/students/profile'),
+
+  saveProfile: (payload: StudentProfilePayload) =>
+    request<StudentProfileResponse>('/students/profile', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+};
