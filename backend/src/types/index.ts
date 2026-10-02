@@ -1,9 +1,9 @@
 import { Role } from '@prisma/client';
 
-// ─── JWT Payload ──────────────────────────────────────────────────────────────
+// ─── JWT Payload / Authenticated User ────────────────────────────────────────
 
 export interface JwtPayload {
-    userId: string;
+    id: string;
     email: string;
     role: Role;
 }

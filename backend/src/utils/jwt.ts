@@ -1,43 +1,30 @@
-import jwt from 'jsonwebtoken';
-import { Role } from '@prisma/client';
-import type { JwtPayload } from '../types';
+import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN as string) || '7d';
-
+const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is not set');
 }
 
-// ─── Sign ─────────────────────────────────────────────────────────────────────
-
-export function signToken(payload: JwtPayload): string {
-    return jwt.sign(payload, JWT_SECRET, {
-        expiresIn: JWT_EXPIRES_IN,
-    } as jwt.SignOptions);
+export interface TokenPayload {
+    id: string;
+    email: string;
+    role: string;
 }
 
-// ─── Verify ───────────────────────────────────────────────────────────────────
+/** Cookie expiry — 7 days in ms */
+export const cookieMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 
-export function verifyToken(token: string): JwtPayload {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded as JwtPayload;
+/** Sign a JWT that expires in 7 days */
+export function signToken(payload: TokenPayload): string {
+    const options: SignOptions = { expiresIn: '7d' };
+    return jwt.sign(payload, JWT_SECRET as string, options);
 }
 
-// ─── Cookie helpers ───────────────────────────────────────────────────────────
-
-/** Returns the max-age in milliseconds for the auth cookie. */
-export function cookieMaxAgeMs(): number {
-    // Parse the JWT_EXPIRES_IN string (e.g. "7d", "24h") into milliseconds.
-    const unit = JWT_EXPIRES_IN.slice(-1);
-    const value = parseInt(JWT_EXPIRES_IN.slice(0, -1), 10);
-    const multipliers: Record<string, number> = {
-        s: 1_000,
-        m: 60_000,
-        h: 3_600_000,
-        d: 86_400_000,
-    };
-    return (multipliers[unit] ?? 86_400_000) * (isNaN(value) ? 7 : value);
+/** Verify a JWT and return its payload, or null if invalid/expired */
+export function verifyToken(token: string): (JwtPayload & TokenPayload) | null {
+    try {
+        return jwt.verify(token, JWT_SECRET as string) as JwtPayload & TokenPayload;
+    } catch {
+        return null;
+    }
 }
-
-export { Role };

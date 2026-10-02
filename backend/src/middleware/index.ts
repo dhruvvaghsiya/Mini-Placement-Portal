@@ -1,1 +1,1 @@
-export { authenticate } from './authenticate';
+export { authenticate, requireAuth, requireStudent, requireTPO } from './authenticate';
