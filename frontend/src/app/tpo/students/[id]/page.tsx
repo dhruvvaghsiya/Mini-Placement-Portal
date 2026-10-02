@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
-import { studentApi } from '@/lib/api';
+import { studentApi, ApiError } from '@/lib/api';
 import type { StudentProfile } from '@/types';
 import { Role } from '@/types';
 import { ROUTES } from '@/lib';
@@ -33,6 +33,9 @@ export default function TpoStudentDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [verifying, setVerifying] = useState(false);
+    const [verifyError, setVerifyError] = useState<string | null>(null);
+
     // ── Auth guard ─────────────────────────────────────────────────────────────
     useEffect(() => {
         if (authLoading) return;
@@ -58,6 +61,22 @@ export default function TpoStudentDetailPage() {
         })();
         return () => { cancelled = true; };
     }, [authLoading, user, studentId]);
+
+    // ── Verify student ─────────────────────────────────────────────────────────
+    const handleVerify = async () => {
+        setVerifying(true);
+        setVerifyError(null);
+        try {
+            await studentApi.verify(studentId);
+            // Refresh from backend as requested
+            const data = await studentApi.getById(studentId);
+            setStudent(data);
+        } catch (err) {
+            setVerifyError(err instanceof ApiError ? err.message : 'Verification failed.');
+        } finally {
+            setVerifying(false);
+        }
+    };
 
     // ── Auth loading guard ─────────────────────────────────────────────────────
     if (authLoading || !user || user.role !== Role.TPO) {
@@ -124,8 +143,25 @@ export default function TpoStudentDetailPage() {
                                 <p className="text-gray-500">{student.email}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                                <VerificationBadge isVerified={student.isVerified} />
-                                <Badge label={student.profileLocked ? 'Locked Profile' : 'Draft Profile'} variant={student.profileLocked ? 'info' : 'default'} />
+                                <div className="flex items-center gap-3">
+                                    <Badge label={student.profileLocked ? 'Locked Profile' : 'Draft Profile'} variant={student.profileLocked ? 'info' : 'default'} />
+                                    <VerificationBadge isVerified={student.isVerified} />
+                                </div>
+                                {!student.isVerified && (
+                                    <div className="mt-2 flex flex-col items-end gap-1">
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            onClick={handleVerify}
+                                            disabled={verifying}
+                                        >
+                                            {verifying ? 'Verifying...' : 'Verify Student'}
+                                        </Button>
+                                        {verifyError && (
+                                            <p className="text-xs text-red-600 font-medium">{verifyError}</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

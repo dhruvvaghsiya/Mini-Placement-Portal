@@ -132,6 +132,12 @@ export const studentApi = {
   /** TPO: get a specific student by id */
   getById: (id: string) =>
     request<StudentProfile>(`/students/${id}`),
+
+  /** TPO: verify a student */
+  verify: (id: string) =>
+    request<StudentProfile>(`/tpo/students/${id}/verify`, {
+      method: 'PATCH',
+    }),
 };
 
 // ─── Company API ──────────────────────────────────────────────────────────────
