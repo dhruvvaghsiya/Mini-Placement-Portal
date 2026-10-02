@@ -8,6 +8,7 @@ dotenv.config();
 
 // ─── Route imports ────────────────────────────────────────────────────────────
 import authRoutes from './routes/auth.routes';
+import studentRoutes from './routes/student.routes';
 
 const app: Application = express();
 
@@ -37,6 +38,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // Auth
 app.use('/api/auth', authRoutes);
 
+// Student
+app.use('/api/students', studentRoutes);
+
 // 404 handler — must be after all routes
 app.use((_req: Request, res: Response) => {
     res.status(404).json({ success: false, message: 'Route not found' });
@@ -57,6 +61,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`   Health check → http://localhost:${PORT}/api/health`);
     console.log(`   Auth         → http://localhost:${PORT}/api/auth`);
+    console.log(`   Students     → http://localhost:${PORT}/api/students`);
 });
 
 export default app;
