@@ -1,0 +1,14 @@
+// Prisma Schema — Mini Placement Portal
+// Full schema will be defined in a later phase.
+// See docs/DATABASE.md for the planned data model.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models will be added here as development progresses.

@@ -1,0 +1,27 @@
+# ============================================================
+# Backend — .gitignore
+# ============================================================
+
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Prisma generated client
+node_modules/.prisma/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
