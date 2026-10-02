@@ -230,15 +230,13 @@ export const applicationApi = {
   myApplications: () =>
     request<Application[]>('/applications/mine'),
 
-  /** TPO: list all applications, optionally filtered by drive */
-  listForDrive: (driveId?: string) =>
-    request<Application[]>(
-      driveId ? `/applications?driveId=${driveId}` : '/applications',
-    ),
+  /** TPO: list all applications */
+  listAllTpo: () =>
+    request<Application[]>('/tpo/applications'),
 
   /** TPO: update the status of an application */
   updateStatus: (id: string, status: ApplicationStatus) =>
-    request<Application>(`/applications/${id}/status`, {
+    request<Application>(`/tpo/applications/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
