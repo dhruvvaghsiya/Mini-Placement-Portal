@@ -8,6 +8,24 @@ function isNonNegativeNumber(v: unknown): v is number {
 function validateCreateBody(body: Record<string, unknown>): string[] {
     const errors: string[] = [];
 
+    // Normalize field aliases from frontend
+    if (typeof body.ctc === 'string') {
+        const parsedCtc = parseFloat(body.ctc);
+        if (!isNaN(parsedCtc)) body.ctc = parsedCtc;
+    }
+    if (!body.deadline && body.applicationDeadline) {
+        body.deadline = body.applicationDeadline;
+    }
+    if (body.minTenthPercentage === undefined && body.minPercentage10th !== undefined) {
+        body.minTenthPercentage = body.minPercentage10th;
+    }
+    if (body.minTwelfthPercentage === undefined && body.minPercentage12th !== undefined) {
+        body.minTwelfthPercentage = body.minPercentage12th;
+    }
+    if (body.minD2DCgpa === undefined && body.minD2dCgpa !== undefined) {
+        body.minD2DCgpa = body.minD2dCgpa;
+    }
+
     if (typeof body.companyId !== 'string' || !body.companyId.trim()) {
         errors.push('companyId is required and must be a non-empty string');
     }
@@ -64,6 +82,21 @@ function validateCreateBody(body: Record<string, unknown>): string[] {
     return errors;
 }
 
+function formatDriveResponse(d: any) {
+    if (!d) return d;
+    return {
+        ...d,
+        title: d.title ?? (d.company?.name ? `${d.company.name} - ${d.role}` : d.role),
+        status: d.status ?? (new Date(d.deadline) > new Date() ? 'UPCOMING' : 'COMPLETED'),
+        applicationDeadline: d.deadline instanceof Date ? d.deadline.toISOString() : d.deadline,
+        driveDate: d.deadline instanceof Date ? d.deadline.toISOString() : d.deadline,
+        location: d.location ?? 'On-Campus',
+        minPercentage10th: d.minTenthPercentage,
+        minPercentage12th: d.minTwelfthPercentage,
+        minD2dCgpa: d.minD2DCgpa,
+    };
+}
+
 // ─── GET /api/drives ──────────────────────────────────────────────────────────
 
 /**
@@ -76,12 +109,14 @@ export async function getDrives(
     next: NextFunction,
 ): Promise<void> {
     try {
-        const drives = await driveService.getAllDrives();
+        const rawDrives = await driveService.getAllDrives();
+        const drives = rawDrives.map(formatDriveResponse);
 
         res.status(200).json({
             success: true,
             message: 'Drives fetched successfully',
             data: { drives },
+            drives,
         });
     } catch (err) {
         next(err);
@@ -100,17 +135,20 @@ export async function getDriveById(
 ): Promise<void> {
     try {
         const { id } = req.params;
-        const drive = await driveService.getDriveById(id);
+        const rawDrive = await driveService.getDriveById(id.trim());
 
-        if (!drive) {
+        if (!rawDrive) {
             res.status(404).json({ success: false, message: 'Drive not found' });
             return;
         }
+
+        const drive = formatDriveResponse(rawDrive);
 
         res.status(200).json({
             success: true,
             message: 'Drive fetched successfully',
             data: { drive },
+            drive,
         });
     } catch (err) {
         next(err);
@@ -165,12 +203,14 @@ export async function createDrive(
                     : undefined,
         };
 
-        const drive = await driveService.createDrive(input);
+        const rawDrive = await driveService.createDrive(input);
+        const drive = formatDriveResponse(rawDrive);
 
         res.status(201).json({
             success: true,
             message: 'Recruitment drive created successfully',
             data: { drive },
+            drive,
         });
     } catch (err) {
         if (err instanceof Error && err.message.includes('does not exist')) {

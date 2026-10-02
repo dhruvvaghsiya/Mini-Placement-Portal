@@ -48,6 +48,7 @@ export async function getCompanies(
             success: true,
             message: 'Companies fetched successfully',
             data: { companies },
+            companies,
         });
     } catch (err) {
         next(err);
@@ -90,6 +91,7 @@ export async function createCompany(
             success: true,
             message: 'Company created successfully',
             data: { company },
+            company,
         });
     } catch (err) {
         if (err instanceof Error && err.message.includes('already exists')) {

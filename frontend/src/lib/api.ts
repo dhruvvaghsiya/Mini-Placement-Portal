@@ -55,7 +55,21 @@ async function request<T>(
     );
   }
 
-  return (body as { data: T }).data ?? (body as unknown as T);
+  const raw = (body as { data?: any }).data ?? body;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    if ('drives' in raw && Array.isArray(raw.drives)) return raw.drives as unknown as T;
+    if ('companies' in raw && Array.isArray(raw.companies)) return raw.companies as unknown as T;
+    if ('applications' in raw && Array.isArray(raw.applications)) return raw.applications as unknown as T;
+    if ('students' in raw && Array.isArray(raw.students)) return raw.students as unknown as T;
+    if ('profile' in raw && raw.profile && typeof raw.profile === 'object') return raw.profile as unknown as T;
+    if ('drive' in raw && raw.drive && typeof raw.drive === 'object') return raw.drive as unknown as T;
+    if ('company' in raw && raw.company && typeof raw.company === 'object') return raw.company as unknown as T;
+    if ('application' in raw && raw.application && typeof raw.application === 'object') return raw.application as unknown as T;
+    if ('student' in raw && raw.student && typeof raw.student === 'object') return raw.student as unknown as T;
+    if ('stats' in raw && raw.stats && typeof raw.stats === 'object') return raw.stats as unknown as T;
+    if ('user' in raw && raw.user && typeof raw.user === 'object') return raw.user as unknown as T;
+  }
+  return raw as T;
 }
 
 // ─── Auth API ─────────────────────────────────────────────────────────────────
@@ -124,16 +138,19 @@ export const studentApi = {
   saveProfile: (payload: StudentProfilePayload) =>
     request<StudentProfile>('/students/profile', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        dob: payload.dateOfBirth,
+      }),
     }),
 
   /** TPO: list all student profiles */
   listAll: () =>
-    request<StudentProfile[]>('/students'),
+    request<StudentProfile[]>('/tpo/students'),
 
   /** TPO: get a specific student by id */
   getById: (id: string) =>
-    request<StudentProfile>(`/students/${id}`),
+    request<StudentProfile>(`/tpo/students/${id}`),
 
   /** TPO: verify a student */
   verify: (id: string) =>
@@ -162,7 +179,10 @@ export const companyApi = {
   create: (payload: CompanyPayload) =>
     request<Company>('/companies', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        imageUrl: payload.logoUrl ?? (payload as any).imageUrl,
+      }),
     }),
 
   update: (id: string, payload: Partial<CompanyPayload>) =>
@@ -199,11 +219,20 @@ export const driveApi = {
   get: (id: string) =>
     request<RecruitmentDrive>(`/drives/${id}`),
 
-  create: (payload: DrivePayload) =>
-    request<RecruitmentDrive>('/drives', {
+  create: (payload: DrivePayload) => {
+    const ctcNum = typeof payload.ctc === 'string' ? parseFloat(payload.ctc) : payload.ctc;
+    return request<RecruitmentDrive>('/drives', {
       method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+      body: JSON.stringify({
+        ...payload,
+        ctc: isNaN(ctcNum) ? payload.ctc : ctcNum,
+        deadline: payload.applicationDeadline ?? (payload as any).deadline,
+        minTenthPercentage: payload.minPercentage10th,
+        minTwelfthPercentage: payload.minPercentage12th,
+        minD2DCgpa: payload.minD2dCgpa,
+      }),
+    });
+  },
 
   update: (id: string, payload: Partial<DrivePayload>) =>
     request<RecruitmentDrive>(`/drives/${id}`, {

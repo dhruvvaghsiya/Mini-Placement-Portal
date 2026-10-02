@@ -12,6 +12,7 @@ import studentRoutes from './routes/student.routes';
 import companyRoutes from './routes/company.routes';
 import driveRoutes from './routes/drive.routes';
 import tpoRoutes from './routes/tpo.routes';
+import applicationRoutes from './routes/application.routes';
 
 const app: Application = express();
 
@@ -49,6 +50,9 @@ app.use('/api/companies', companyRoutes);
 
 // Drives
 app.use('/api/drives', driveRoutes);
+
+// Applications
+app.use('/api/applications', applicationRoutes);
 
 // TPO management
 app.use('/api/tpo', tpoRoutes);

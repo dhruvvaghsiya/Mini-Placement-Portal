@@ -31,12 +31,32 @@ function validateCreateBody(body: Record<string, unknown>): {
     if (!body.phone || typeof body.phone !== 'string' || !/^\d{10}$/.test(body.phone.trim())) {
         errors.push('phone must be a 10-digit number');
     }
-    if (!isValidDateString(body.dob)) {
+    const rawDob = (body.dob ?? body.dateOfBirth) as unknown;
+    if (!isValidDateString(rawDob)) {
         errors.push('dob must be a valid ISO date string (e.g. "2003-05-15")');
     }
 
     // ── 10th subject marks ───────────────────────────────────────────────────
-    const sm = body.tenthSubjectMarks as Record<string, unknown> | undefined;
+    let sm = body.tenthSubjectMarks as Record<string, unknown> | undefined;
+    if ((!sm || typeof sm !== 'object') && Array.isArray(body.subjects10th)) {
+        sm = {
+            tenthMaths: 0,
+            tenthPhysics: 0,
+            tenthChemistry: 0,
+            tenthEnglish: 0,
+            tenthComputer: 0,
+        };
+        for (const s of body.subjects10th as { name: string; marks: number }[]) {
+            const n = (s.name || '').toLowerCase();
+            const m = Number(s.marks) || 0;
+            if (n.includes('math')) sm.tenthMaths = m;
+            else if (n.includes('phys')) sm.tenthPhysics = m;
+            else if (n.includes('chem')) sm.tenthChemistry = m;
+            else if (n.includes('eng')) sm.tenthEnglish = m;
+            else if (n.includes('comp')) sm.tenthComputer = m;
+        }
+    }
+
     const subjectKeys: (keyof TenthSubjectMarks)[] = [
         'tenthMaths', 'tenthPhysics', 'tenthChemistry', 'tenthEnglish', 'tenthComputer',
     ];
@@ -95,7 +115,7 @@ function validateCreateBody(body: Record<string, unknown>): {
     const data: CreateProfileInput = {
         fullName: (body.fullName as string).trim(),
         phone: (body.phone as string).trim(),
-        dob: body.dob as string,
+        dob: rawDob as string,
         tenthSubjectMarks: sm as unknown as TenthSubjectMarks,
         tenthPercentage: body.tenthPercentage as number,
         isD2D: body.isD2D as boolean,
@@ -107,6 +127,22 @@ function validateCreateBody(body: Record<string, unknown>): {
     return { errors: [], data };
 }
 
+function formatProfileResponse(profile: any) {
+    if (!profile) return profile;
+    const sm = (profile.tenthSubjectMarks as Record<string, number>) || {};
+    return {
+        ...profile,
+        dateOfBirth: profile.dob instanceof Date ? profile.dob.toISOString().split('T')[0] : (profile.dob ?? profile.dateOfBirth),
+        subjects10th: Array.isArray(profile.subjects10th) ? profile.subjects10th : [
+            { name: 'Mathematics', marks: sm.tenthMaths ?? 0 },
+            { name: 'Physics', marks: sm.tenthPhysics ?? 0 },
+            { name: 'Chemistry', marks: sm.tenthChemistry ?? 0 },
+            { name: 'English', marks: sm.tenthEnglish ?? 0 },
+            { name: 'Computer Science', marks: sm.tenthComputer ?? 0 },
+        ],
+    };
+}
+
 // ─── GET /api/students/profile ────────────────────────────────────────────────
 
 /**
@@ -115,9 +151,9 @@ function validateCreateBody(body: Record<string, unknown>): {
  */
 export async function getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const profile = await studentService.getProfile(req.user!.id);
+        const rawProfile = await studentService.getProfile(req.user!.id);
 
-        if (!profile) {
+        if (!rawProfile) {
             res.status(404).json({
                 success: false,
                 message: 'Profile not found. Please submit your profile first.',
@@ -125,10 +161,13 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
             return;
         }
 
+        const profile = formatProfileResponse(rawProfile);
+
         res.status(200).json({
             success: true,
             message: 'Profile fetched successfully',
             data: { profile },
+            profile,
         });
     } catch (err) {
         next(err);
@@ -155,12 +194,14 @@ export async function createProfile(req: Request, res: Response, next: NextFunct
             return;
         }
 
-        const profile = await studentService.createProfile(req.user!.id, data!);
+        const rawProfile = await studentService.createProfile(req.user!.id, data!);
+        const profile = formatProfileResponse(rawProfile);
 
         res.status(201).json({
             success: true,
             message: 'Profile created and locked successfully',
             data: { profile },
+            profile,
         });
     } catch (err) {
         if (err instanceof Error && err.message.includes('already exists')) {
@@ -218,12 +259,14 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
             return;
         }
 
-        const profile = await studentService.updateProfile(req.user!.id, body);
+        const rawProfile = await studentService.updateProfile(req.user!.id, body);
+        const profile = formatProfileResponse(rawProfile);
 
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
             data: { profile },
+            profile,
         });
     } catch (err) {
         if (err instanceof Error) {
