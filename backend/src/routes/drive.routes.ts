@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/authenticate';
-import { getDrives, getDriveById } from '../controllers/drive.controller';
+import { authenticate, requireTPO } from '../middleware/authenticate';
+import { getDrives, getDriveById, getEligibleStudents } from '../controllers/drive.controller';
 
 const router = Router();
 
@@ -8,4 +8,8 @@ const router = Router();
 router.get('/', authenticate, getDrives);
 router.get('/:id', authenticate, getDriveById);
 
+// TPO only — returns all eligible students for a specific drive.
+router.get('/:id/eligible-students', ...requireTPO, getEligibleStudents);
+
 export default router;
+
