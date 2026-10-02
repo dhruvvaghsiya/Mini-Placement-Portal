@@ -92,12 +92,17 @@ export interface RecruitmentDrive {
   companyId: string;
   company?: Company;
   description: string;
-  eligibilityCriteria: string;
-  package: string;
+  role: string;
+  ctc: string;
   location: string;
   driveDate: string;
   applicationDeadline: string;
   status: DriveStatus;
+  // Eligibility criteria
+  minPercentage10th?: number;
+  minPercentage12th?: number;
+  minD2dCgpa?: number;
+  minCpi?: number;
   createdAt: string;
   updatedAt: string;
 }

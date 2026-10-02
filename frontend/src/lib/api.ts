@@ -173,11 +173,15 @@ export interface DrivePayload {
   title: string;
   companyId: string;
   description: string;
-  eligibilityCriteria: string;
-  package: string;
+  role: string;
+  ctc: string;
   location: string;
   driveDate: string;
   applicationDeadline: string;
+  minPercentage10th?: number;
+  minPercentage12th?: number;
+  minD2dCgpa?: number;
+  minCpi?: number;
 }
 
 export const driveApi = {
