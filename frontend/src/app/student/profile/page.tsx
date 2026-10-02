@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import { studentApi, ApiError } from '@/lib/api';
 import type { StudentProfile } from '@/types';
+import { Role } from '@/types';
+import { ROUTES } from '@/lib';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -93,7 +96,8 @@ function responseToForm(p: StudentProfile): ProfileFormValues {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StudentProfilePage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
 
   // Server-fetched profile state
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -129,8 +133,16 @@ export default function StudentProfilePage() {
 
   const isD2D = useWatch({ control, name: 'isD2D' });
 
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) { router.replace(ROUTES.LOGIN); return; }
+    if (user.role !== Role.STUDENT) router.replace(ROUTES.TPO.DASHBOARD);
+  }, [user, authLoading, router]);
+
   // ── Load profile on mount ──────────────────────────────────────────────────
   useEffect(() => {
+    if (authLoading || !user || user.role !== Role.STUDENT) return;
     let cancelled = false;
     (async () => {
       try {
@@ -187,6 +199,18 @@ export default function StudentProfilePage() {
       );
     }
   };
+
+  // ── Auth loading guard ─────────────────────────────────────────────────────
+  if (authLoading || !user || user.role !== Role.STUDENT) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <svg className="h-8 w-8 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    );
+  }
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loadingProfile) {
