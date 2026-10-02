@@ -9,6 +9,7 @@ import type {
   DriveStatus,
   TpoDashboardStats,
 } from '../types';
+import type { ApiResponse, RecruitmentDrive as StudentRecruitmentDrive } from '../types/student';
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -249,3 +250,33 @@ export const dashboardApi = {
   getTpoStats: () =>
     request<TpoDashboardStats>('/tpo/dashboard/stats'),
 };
+
+// ─── Compatibility helpers (named exports used by some pages) ─────────────────
+
+/**
+ * Fetch all open recruitment drives.
+ * Returns an ApiResponse envelope so pages can check res.success / res.data.drives.
+ */
+export async function fetchDrives(): Promise<ApiResponse<{ drives: StudentRecruitmentDrive[] }>> {
+  try {
+    const drives = await driveApi.list() as unknown as StudentRecruitmentDrive[];
+    return { success: true, message: 'OK', data: { drives } };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to load drives.';
+    return { success: false, message };
+  }
+}
+
+/**
+ * Apply to a recruitment drive.
+ * Returns an ApiResponse envelope so pages can check res.success.
+ */
+export async function applyToDrive(driveId: string): Promise<ApiResponse<unknown>> {
+  try {
+    await applicationApi.apply(driveId);
+    return { success: true, message: 'Applied successfully.' };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to apply.';
+    return { success: false, message };
+  }
+}
