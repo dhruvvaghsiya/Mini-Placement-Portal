@@ -141,6 +141,7 @@ export interface CompanyPayload {
   website?: string;
   industry: string;
   description?: string;
+  logoUrl?: string;
 }
 
 export const companyApi = {

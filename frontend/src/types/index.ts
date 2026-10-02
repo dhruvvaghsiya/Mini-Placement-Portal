@@ -79,6 +79,7 @@ export interface Company {
   website?: string;
   industry: string;
   description?: string;
+  logoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
