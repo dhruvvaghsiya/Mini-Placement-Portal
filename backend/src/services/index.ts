@@ -1,4 +1,2 @@
-// Services will be added here as features are implemented.
-// Services contain business logic called by controllers.
-// Example: authService.ts, studentService.ts, driveService.ts
-export { };
+export { registerUser, loginUser, getUserById } from './auth.service';
+export type { SafeUser, RegisterInput, LoginInput } from './auth.service';
